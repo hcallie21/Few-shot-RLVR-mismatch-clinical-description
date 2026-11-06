@@ -7,9 +7,9 @@ from pathlib import Path
 import time
 
 MAX_TOKENS = 1500
-ROOT = Path('/data/houstoncm/Contradictions/')
-ADAPTER = ROOT / 'exhaustive_hp_tuning/try_best_combos/80_10_10_CRO_OLLAMA_BETA_01_m27b/m27b_all_lin_grpo_reasoning_CRO_OLLAMA_beta_01_1500'
-OUTPUT = ROOT / 'exhaustive_hp_tuning/try_best_combos/80_10_10_CRO_OLLAMA_BETA_01_m27b/m27b_80_10_10_CRO_OLLAMA_BETA_01_1500.csv'
+ROOT = Path(os.getcwd())
+ADAPTER = ROOT / '/save/model/path/m27b_all_lin_grpo_reasoning_CRO_OLLAMA_beta_01_1500'
+OUTPUT = ROOT / '/save/csv/path/m27b_80_10_10_CRO_OLLAMA_BETA_01_1500.csv'
 SYSTEM_PROMPT = {
     'role': 'system',
     'content': 'You are an expert clinician who specializes in genetics. You must respond with a logical rigor and deep explanatory depth.',
@@ -21,6 +21,7 @@ FIELDS = ['ppt_slide_number', 'question_index', 'prompt_number', 'patient_condit
 
 def arguments():
     p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--root', type=Path, default=ROOT)
     p.add_argument('--adapter', type=Path, default=ADAPTER)
     p.add_argument('--base-model', default=None, help='Override adapter base_model_name_or_path')
     p.add_argument('--input-csv', type=Path, default=ROOT / 'prompt_data/all_prompts_gt.csv')

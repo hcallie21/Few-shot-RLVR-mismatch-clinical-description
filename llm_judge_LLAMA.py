@@ -15,10 +15,10 @@ import time
 import torch
 import traceback
 #file for analysis
-input_dir = rf"/data/houstoncm/Contradictions/outputs/llm_as_a_judge_v2/private_images/m27b_private_control_inf_transformers_max_tokens_1500.csv"
+input_dir = rf"/path/to/input"
 
-model_id = "meta-llama/Llama-3.1-8B-Instruct" # "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8"
-response_save = rf"/data/houstoncm/Contradictions/outputs/llm_as_a_judge_v2/private_images/summarized_m27b_private_control_inf_transformers_max_tokens_1500.csv"
+model_id = "meta-llama/Llama-3.1-8B-Instruct"
+response_save = rf"/save/output/here"
 
 
 processor = AutoTokenizer.from_pretrained(
@@ -59,7 +59,7 @@ SYSTEM_PROMPT = {
     Your Response Should Be: 'No', specifically because of this conclusion: 'do not exhibit the characteristic reduction in size associated with microphthalmia.'
     """
 }
-offload_dir = "/data/houstoncm/Contradictions/outputs/llm_as_a_judge_v2/maverick_offload"
+offload_dir = "./temp_offload"
 os.makedirs(offload_dir, exist_ok=True)
 
 
@@ -181,11 +181,6 @@ for sample in eval:
         raw_output = generate_text_from_sample(
             model, processor, sample
         )
-        # parsed = "Yes" if ("yes" in raw_output.strip().lower()) else "No"
-        # parsed_ok = (
-        #     raw_output is not None
-        #     and raw_output.strip().lower() in {"yes", "no"}
-        # )
         normalized = raw_output.strip().lower()
         parsed_ok = normalized in {"yes", "no"}
         parsed = normalized.capitalize() if parsed_ok else ""

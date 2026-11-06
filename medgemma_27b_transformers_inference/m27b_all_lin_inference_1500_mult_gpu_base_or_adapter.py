@@ -6,8 +6,7 @@ import os
 from pathlib import Path
 import time
 from transformers import BitsAndBytesConfig
-ROOT = Path('/data/houstoncm/Contradictions/exhaustive_hp_tuning/control_inf_transformers')
-# ADAPTER = ROOT / 'm27b_all_lin_sft_grpo_reasoning_fancy_cosine_reward_max_tokens_1500'
+ROOT = Path('/set/home/dir')
 OUTPUT = ROOT / 'm27b_control_inf_transformers_max_tokens_1500.csv'
 SYSTEM_PROMPT = {
     'role': 'system',
@@ -29,7 +28,7 @@ def arguments():
         '--base-model', default=None,
         help='Override the base model recorded in an adapter config',
     )
-    p.add_argument('--input-csv', type=Path, default='/data/houstoncm/Contradictions/prompt_data/all_prompts_gt.csv')
+    p.add_argument('--input-csv', type=Path, default='/set/input/prompts/all_prompts_gt.csv')
     p.add_argument('--image-root', type=Path, default=ROOT)
     p.add_argument('--output', type=Path, default=OUTPUT)
     p.add_argument('--run-dir', type=Path, required=True)

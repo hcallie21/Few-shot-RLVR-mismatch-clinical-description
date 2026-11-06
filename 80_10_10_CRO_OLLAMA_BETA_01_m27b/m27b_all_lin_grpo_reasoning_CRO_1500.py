@@ -2,20 +2,12 @@ import os
 import sys
 import re
 import pandas as pd
-
+import argparse
 import torch
 import torch.distributed as dist
-
-
-LOCAL_RANK = int(os.environ.get("LOCAL_RANK", "0"))
-torch.cuda.set_device(LOCAL_RANK)
-DEVICE = torch.device("cuda", LOCAL_RANK)
-
 from PIL import Image
 from datasets import Dataset
 from datasets import Features, Image as HFImage, Json, List, Value
-
-from peft import PeftConfig, PeftModel
 from peft import LoraConfig, prepare_model_for_kbit_training, get_peft_model
 
 from sentence_transformers import SentenceTransformer, util
@@ -23,23 +15,31 @@ from transformers import AutoProcessor, BitsAndBytesConfig,  AutoModelForImageTe
 from trl import GRPOConfig, GRPOTrainer
 from trl.rewards import get_repetition_penalty_reward, get_soft_overlong_punishment
 from sklearn.model_selection import GroupShuffleSplit
-
 import logging
 import threading
 from collections.abc import Callable
-
+from pathlib import Path
+LOCAL_RANK = int(os.environ.get("LOCAL_RANK", "0"))
+torch.cuda.set_device(LOCAL_RANK)
+DEVICE = torch.device("cuda", LOCAL_RANK)
 USE_LORA = False
 USE_QLORA = True
 MAX_TOKENS = 1500
-# [simple_cosine_sim_reward, get_repetition_penalty_reward, get_soft_overlong_punishment]
 
-root = '/data/houstoncm/Contradictions/exhaustive_hp_tuning/try_best_combos/80_10_10_CRO_OLLAMA_BETA_01_m27b/'
-output_dir = root +"m27b_all_lin_grpo_reasoning_CRO_OLLAMA_beta_01_1500" #todo define output directory
-# results_csv= './m27b_all_lin_sft_grpo_inference_fancy_cosine_reward_max_tokens_1500.csv'
+ROOT = '/path/to/dir/'
+output_dir = "m27b_all_lin_grpo_reasoning_CRO_OLLAMA_beta_01_1500" #todo define output directory
 model_id = "google/medgemma-27b-it" 
-
+def arguments(): 
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--root', type=Path, default=ROOT)
+    p.add_argument('--output_dir', type=Path, default=Path(ROOT, output_dir))
+    p.add_argument('--model_id', type=str, default="google/medgemma-27b-it")
+    p.add_argument('--max_tokens', type=int, default=1500)
+    p.add_argument('--lora', type=bool, default=False)
+    p.add_argument('--qlora',type=bool, default=True)
+    
 print(model_id)
-processor = AutoProcessor.from_pretrained( model_id, padding_side="left" )
+processor = AutoProcessor.from_pretrained( model_id, padding_side="left")
 
 if USE_QLORA or USE_LORA:
     lora_config = LoraConfig(
@@ -164,9 +164,6 @@ def simple_cosine_sim_reward(completions, solution, log_extra: Callable[[str, li
         - For correct answers: reward = 0.5 - (len - min_len)/(max_len - min_len)
         - For incorrect answers: reward = min(0, 0.5 - (len - min_len)/(max_len - min_len)) #! cannot have min 0 with this dataset
     """
-    
-    # * set up logger 
-    is_main_thread = threading.current_thread() is threading.main_thread()
                           
     contents = completions
 
@@ -194,38 +191,31 @@ def simple_cosine_sim_reward(completions, solution, log_extra: Callable[[str, li
 
 
 training_args = GRPOConfig(
-    # # Model loading (passed to `from_pretrained` when the trainer loads the model)
-    # model_init_kwargs={
-    #     "attn_implementation": "flash_attention_2",                      # Change to Flash Attention if GPU has support
-    #     "torch_dtype": "float32",                                 # Change to bfloat16 if GPU has support
-    # },
     chat_template_kwargs={"return_tensors": "pt"},
     # Training schedule / optimization
-    learning_rate=2e-5,                                     # Learning rate for the optimizer
+    learning_rate=2e-5,
     num_train_epochs=20,
     beta = 0.01,
-    # max_steps=25,                                          # Number of dataset passes. For full trainings, use `num_train_epochs` instead
     bf16=True,
     fp16=False,
     # Parameters that control GRPO training (you can adapt them)
     per_device_train_batch_size = 8,
     gradient_accumulation_steps = 1,
-    max_completion_length=MAX_TOKENS, # default: 256               # Max completion length produced during training
+    max_completion_length=MAX_TOKENS, # default: 256        # Max completion length produced during training
     num_generations=8, # default: 8                         # Number of generations produced during trainig for comparison
     # Optimizations
     optim = "paged_adamw_8bit",                             # Optimizer
     use_liger_kernel=True,                                  # Enable Liger kernel optimizations for faster training
     #^ Ollama settings 
-    repetition_penalty = 1.0,
     # repeat_last_n = 64, #? i don't think that ollama supports that directly
-    temperature = 0.8,
-    seed=0,
     # num_predict=-1, #? i don't think that ollama supports that directly
     # draft_num_predict=4, #? i don't think that ollama supports that directly
+    repetition_penalty = 1.0,
+    temperature = 0.8,
+    seed=0,
     top_k=40,
     top_p=0.9,
     min_p=0.0,
-    #! reward weights get changed here
     reward_weights = [0.8,0.1, 0.1],
     # Parameters related to reporting and saving
     output_dir=output_dir,                                  # Where to save model checkpoints and logs
@@ -240,12 +230,9 @@ trainer = GRPOTrainer(
     reward_funcs= [simple_cosine_sim_reward, repetition_reward, overlong_reward], 
     args=training_args,
     train_dataset=train,
-    # eval_dataset=validation,
-    processing_class=processor
+    processing_class=processor,
 )
 
 trainer.train()
-# trainer.save_model()
 trainer.save_model(output_dir)
 print("Model is saved to: ", output_dir)
-#! go for inference

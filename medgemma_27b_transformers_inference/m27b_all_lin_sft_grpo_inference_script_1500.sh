@@ -8,10 +8,7 @@
 #SBATCH --cpus-per-task=12
 set -eo pipefail
 
-cd /data/houstoncm/Contradictions/
-source $MYCONDA
 conda activate trl
-# module load CUDA/12.1 gcc
 echo "CUDA_HOME=$CUDA_HOME"
 
 # Three workers, each with a complete BF16 model on its own 80 GB GPU.
@@ -19,17 +16,13 @@ export OMP_NUM_THREADS=2
 export MKL_NUM_THREADS=2
 export TOKENIZERS_PARALLELISM=false
 export PYTHONUNBUFFERED=1
-unset CUDA_LAUNCH_BLOCKING
-unset DEBUG_MODE
-export LD_LIBRARY_PATH="/data/houstoncm/conda/envs/trl/lib:${LD_LIBRARY_PATH:-}"
-
 # Retain Slurm's CUDA_VISIBLE_DEVICES mapping; GPU_ID does not select GPUs.
 echo "CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-unset}"
 echo "CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}"
 nvidia-smi --query-gpu=name,memory.total --format=csv
-hf auth switch --token-name callie_read
+hf auth switch --token-name <ins_hf_token_name>
 
-TASK_DIR=/data/houstoncm/Contradictions/exhaustive_hp_tuning/control_inf_transformers
+TASK_DIR=/set/home/dir
 TASK_PY="${TASK_DIR}/m27b_all_lin_inference_1500_mult_gpu_base_or_adapter.py"
 TASK_RUN_DIR=$(mktemp -d "${TASK_DIR}/inference__XXXXXX")
 TASK_LOG="${TASK_RUN_DIR}/inference.log"

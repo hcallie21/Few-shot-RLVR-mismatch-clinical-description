@@ -9,8 +9,6 @@
 
 set -eo pipefail
 # Set thread configuration
-cd /data/houstoncm/Contradictions/exhaustive_hp_tuning/try_best_combos/80_10_10_CRO_OLLAMA_BETA_01_m27b
-source $MYCONDA
 conda activate trl-flash
 pip cache purge
 module load CUDA/12.8
@@ -31,7 +29,6 @@ export LOG_PATH="./debug_log_2b.txt"
 export GPU_ID=${SLURM_STEP_GPUS:-$SLURM_JOB_GPUS}
 echo ${GPU_ID}
 
-export LD_LIBRARY_PATH="/data/houstoncm/conda/envs/trl-flash/lib:${LD_LIBRARY_PATH}"
 
 echo "SLURM_JOB_GPUS=${SLURM_JOB_GPUS}"
 echo "SLURM_STEP_GPUS=${SLURM_STEP_GPUS}"
@@ -40,7 +37,7 @@ echo "CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}"
 nvidia-smi -L
 
 hf auth list
-hf auth switch --token-name callie_read
+hf auth switch --token-name <insc_your_hf_token_name>
 CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES} torchrun --standalone --nproc_per_node=2 \
-    /data/houstoncm/Contradictions/exhaustive_hp_tuning/try_best_combos/80_10_10_CRO_OLLAMA_BETA_01_m27b/m27b_all_lin_grpo_reasoning_CRO_1500.py \
-    > ./20261030_training_all_lin_grpo_CRO_m27b.txt 2>&1
+    /ins/task/dir/m27b_all_lin_grpo_reasoning_CRO_1500.py \
+    > ./training_output.txt 2>&1

@@ -6,10 +6,9 @@ import os
 from pathlib import Path
 import time
 
-MAX_TOKENS = 1500
-ROOT = Path(os.getcwd())
-ADAPTER = ROOT / '/save/model/path/m27b_all_lin_grpo_reasoning_CRO_OLLAMA_beta_01_1500'
-OUTPUT = ROOT / '/save/csv/path/m27b_80_10_10_CRO_OLLAMA_BETA_01_1500.csv'
+ROOT = Path(os.getcwd()) or ""
+
+OUTPUT = Path(ROOT , 'medgemma_27b_trained_response.csv')
 SYSTEM_PROMPT = {
     'role': 'system',
     'content': 'You are an expert clinician who specializes in genetics. You must respond with a logical rigor and deep explanatory depth.',
@@ -22,14 +21,14 @@ FIELDS = ['ppt_slide_number', 'question_index', 'prompt_number', 'patient_condit
 def arguments():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--root', type=Path, default=ROOT)
-    p.add_argument('--adapter', type=Path, default=ADAPTER)
+    p.add_argument('--adapter', type=Path, default=Path("medgemma_27b_grpo_trained"))
     p.add_argument('--base-model', default=None, help='Override adapter base_model_name_or_path')
-    p.add_argument('--input-csv', type=Path, default=ROOT / 'prompt_data/all_prompts_gt.csv')
+    p.add_argument('--input-csv', type=Path, default=Path(ROOT, 'data/all_prompts_gt.csv'))
     p.add_argument('--image-root', type=Path, default=ROOT)
     p.add_argument('--output', type=Path, default=OUTPUT)
     p.add_argument('--run-dir', type=Path, required=True)
     p.add_argument('--batch-size', type=int, default=2)
-    p.add_argument('--max-new-tokens', type=int, default=MAX_TOKENS)
+    p.add_argument('--max-new-tokens', type=int, default=1500)
     p.add_argument('--threads', type=int, default=2)
     p.add_argument('--no-merge-adapter', action='store_true')
     p.add_argument('--merge-results', action='store_true')

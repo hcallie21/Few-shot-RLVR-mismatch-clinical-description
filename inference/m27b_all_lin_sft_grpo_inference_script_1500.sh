@@ -7,7 +7,7 @@
 #SBATCH --mem=90G
 #SBATCH --cpus-per-task=12
 set -eo pipefail
-
+cd "$SLURM_SUBMIT_DIR"
 conda activate trl
 echo "CUDA_HOME=$CUDA_HOME"
 
@@ -22,7 +22,7 @@ echo "CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}"
 nvidia-smi --query-gpu=name,memory.total --format=csv
 hf auth switch --token-name <ins_hf_token_name>
 
-TASK_DIR=/set/home/dir
+TASK_DIR="$SLURM_SUBMIT_DIR"
 TASK_PY="${TASK_DIR}/m27b_all_lin_inference_1500_mult_gpu_base_or_adapter.py"
 TASK_RUN_DIR=$(mktemp -d "${TASK_DIR}/inference__XXXXXX")
 TASK_LOG="${TASK_RUN_DIR}/inference.log"

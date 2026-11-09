@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 import time
 from transformers import BitsAndBytesConfig
-ROOT = Path('/set/home/dir')
+ROOT = Path(os.getcwd()) or Path("")
 OUTPUT = ROOT / 'm27b_control_inf_transformers_max_tokens_1500.csv'
 SYSTEM_PROMPT = {
     'role': 'system',
@@ -28,7 +28,7 @@ def arguments():
         '--base-model', default=None,
         help='Override the base model recorded in an adapter config',
     )
-    p.add_argument('--input-csv', type=Path, default='/set/input/prompts/all_prompts_gt.csv')
+    p.add_argument('--input-csv', type=Path, default=Path(ROOT, 'data/all_prompts_gt.csv'))
     p.add_argument('--image-root', type=Path, default=ROOT)
     p.add_argument('--output', type=Path, default=OUTPUT)
     p.add_argument('--run-dir', type=Path, required=True)
